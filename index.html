@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🥊 Kickboxing Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f1115;
+            color: #e4e6eb;
+        }
+        .glass-card {
+            background: rgba(23, 27, 34, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12 text-sm">
+
+    <!-- Header Navigation -->
+    <header class="border-b border-gray-800 bg-[#13171e] sticky top-0 z-40 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+            <div class="bg-orange-600 p-2.5 rounded-xl text-black font-bold text-xl shadow-lg">🥊</div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white">Xtream KICKBOXING</h1>
+                <p class="text-xs text-gray-400 font-medium">Class Attendance & Fee Dashboard</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-3">
+            <button onclick="syncWithCloud()" id="cloudSyncBtn" class="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-black font-bold px-4 py-2 rounded-xl transition flex items-center space-x-2 shadow-lg">
+                <span id="syncIcon">🔄</span> <span id="syncText">Sync to Cloud</span>
+            </button>
+            <button onclick="exportToCSV()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2 rounded-xl font-semibold transition shadow-lg">
+                📥 Export Excel
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 mt-8 space-y-6">
+
+        <!-- NEW CSV BACKUP IMPORT CONTROLLER ZONE -->
+        <section class="glass-card p-5 rounded-2xl border border-dashed border-gray-800 bg-gradient-to-r hover:from-gray-900/40 transition">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-sm font-bold text-white">Import Backup from CSV</h3>
+                    <!-- <p class="text-xs text-gray-400">Restore lost local data by importing your downloaded Google Sheets report (.csv file).</p> -->
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="document.getElementById('csvImportInput').click()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-xl font-semibold transition shadow-md border border-gray-700">
+                        📂 Choose Backup File
+                    </button>
+                    <input type="file" id="csvImportInput" accept=".csv" class="hidden" onchange="importFromCSV(event)">
+                    <span id="importStatusText" class="text-xs font-semibold text-gray-500"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ZONE 2: ACCESSIBLE DATE & MONTH CONTROLLERS -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="glass-card p-5 rounded-2xl flex flex-col justify-between bg-gradient-to-br from-[#1c222e] to-[#13171e] space-y-3">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-orange-400">📅 View Mode</span>
+                    <div class="inline-flex rounded-lg p-0.5 bg-gray-900 border border-gray-800">
+                        <button onclick="toggleViewMode('date')" id="modeDateBtn" class="text-xs px-3 py-1 rounded-md text-white bg-gray-800 transition">By Date</button>
+                        <button onclick="toggleViewMode('month')" id="modeMonthBtn" class="text-xs px-3 py-1 rounded-md text-gray-400 hover:text-white transition">By Month</button>
+                    </div>
+                </div>
+                
+                <div id="viewModeDateContainer">
+                    <input type="date" id="attendanceDate" onchange="handleDateChange()" class="bg-[#242b3a] border border-gray-700 text-white font-bold rounded-xl px-4 py-2 w-full focus:outline-none focus:border-orange-500">
+                </div>
+                
+                <div id="viewModeMonthContainer" class="hidden">
+                    <select id="attendanceMonth" onchange="handleMonthChange()" class="bg-[#242b3a] border border-gray-700 text-white font-bold rounded-xl px-4 py-2.5 w-full focus:outline-none focus:border-orange-500">
+                        <option value="2026-01">January 2026</option>
+                        <option value="2026-02">February 2026</option>
+                        <option value="2026-03">March 2026</option>
+                        <option value="2026-04">April 2026</option>
+                        <option value="2026-05">May 2026</option>
+                        <option value="2026-06">June 2026</option>
+                        <option value="2026-07">July 2026</option>
+                        <option value="2026-08">August 2026</option>
+                        <option value="2026-09">September 2026</option>
+                        <option value="2026-10">October 2026</option>
+                        <option value="2026-11">November 2026</option>
+                        <option value="2026-12">December 2026</option>
+                    </select>
+                </div>
+            </div>
+
+            <div onclick="setFilter('active')" class="glass-card p-5 rounded-2xl cursor-pointer hover:border-gray-600 transition flex flex-col justify-center">
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Active Students 👤</p>
+                <h3 id="statActive" class="text-3xl font-bold text-white mt-1">0</h3>
+            </div>
+            
+            <div onclick="setFilter('unpaid')" id="unpaidCardWidget" class="glass-card p-5 rounded-2xl cursor-pointer border border-transparent hover:border-red-500/50 transition flex flex-col justify-center bg-gradient-to-r hover:from-red-950/20">
+                <p class="text-xs font-semibold uppercase tracking-wider text-red-400 flex justify-between items-center">
+                    <span>Unpaid This Month 🚨</span>
+                    <span class="text-[10px] bg-red-950 px-2 py-0.5 rounded border border-red-800 animate-pulse text-red-400">Click to Filter</span>
+                </p>
+                <h3 id="statUnpaid" class="text-3xl font-bold text-red-400 mt-1">0</h3>
+            </div>
+        </section>
+
+        <!-- ZONE 3: LIST LAYOUT -->
+        <section class="glass-card rounded-2xl overflow-hidden shadow-2xl">
+            <div class="p-5 border-b border-gray-800 flex flex-wrap items-center justify-between gap-4 bg-[#161a23]">
+                <div class="flex items-center space-x-3 w-full md:w-auto flex-1 max-w-md">
+                    <div class="relative w-full">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">🔍</span>
+                        <input type="text" id="searchBar" oninput="renderStudents()" placeholder="Search ID, name..." class="w-full bg-[#1e2330] border border-gray-700 rounded-xl pl-10 pr-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500">
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4 w-full md:w-auto justify-between md:justify-end">
+                    <div class="bg-[#1e2330] p-1 rounded-xl flex space-x-1 font-medium border border-gray-800">
+                        <button onclick="setFilter('all')" id="filterAll" class="px-3.5 py-1 rounded-lg text-white bg-gray-800">All</button>
+                        <button onclick="setFilter('active')" id="filterActive" class="px-3.5 py-1 rounded-lg text-gray-400 hover:text-white">Active</button>
+                        <button onclick="setFilter('inactive')" id="filterInactive" class="px-3.5 py-1 rounded-lg text-gray-400 hover:text-white">Inactive</button>
+                        <button onclick="setFilter('unpaid')" id="filterUnpaid" class="px-3.5 py-1 rounded-lg text-gray-400 hover:text-white">⚠️ Unpaid</button>
+                    </div>
+
+                    <button onclick="openStudentModal(false)" class="bg-orange-500 hover:bg-orange-400 text-black px-5 py-2 rounded-xl font-bold transition shadow-lg">
+                        <span>+ Add Fighter</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-800 text-xs font-semibold uppercase tracking-wider text-gray-400 bg-[#141820]">
+                            <th class="py-4 px-6 w-20">ID</th>
+                            <th class="py-4 px-6">Name (Click for stats)</th>
+                            <th class="py-4 px-6 text-center">Status</th>
+                            <th class="py-4 px-6 text-center" id="attendanceHeaderDate">Attendance</th>
+                            <th class="py-4 px-6 text-center" id="feeHeaderMonth">Fee Status</th>
+                            <th class="py-4 px-6 text-center">Payment Date</th>
+                            <th class="py-4 px-6 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody" class="divide-y divide-gray-850">
+                        <!-- Table Content -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- UI MODAL VIEWPORTS -->
+    <div id="studentModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-[#171b22] border border-gray-800 rounded-2xl w-full max-w-md p-6 mx-4 relative shadow-2xl">
+            <h3 id="modalTitle" class="text-xl font-bold text-white mb-4">Add New Fighter</h3>
+            <form id="studentForm" onsubmit="saveStudentForm(event)">
+                <input type="hidden" id="modalStudentId">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Full Name</label>
+                        <input type="text" id="studentName" required class="w-full bg-[#202632] border border-gray-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-orange-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Contact Phone</label>
+                        <input type="tel" id="studentPhone" class="w-full bg-[#202632] border border-gray-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-orange-500" placeholder="Optional">
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="closeStudentModal()" class="px-4 py-2 rounded-xl text-gray-400 hover:text-white transition bg-transparent">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl font-bold bg-orange-500 hover:bg-orange-400 text-black transition">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- METRICS DRAWER -->
+    <div id="analyticsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-[#171b22] border border-gray-800 rounded-2xl w-full max-w-md p-6 mx-4 relative shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                <div>
+                    <h3 id="analyticsName" class="text-lg font-bold text-white">Fighter Stats</h3>
+                    <p id="analyticsId" class="text-xs text-gray-400 font-mono"></p>
+                </div>
+                <button onclick="closeAnalyticsModal()" class="text-gray-500 hover:text-white text-xl">✕</button>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-[#1f2533] p-4 rounded-xl text-center">
+                    <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Total Attended</p>
+                    <p id="analyticsCountText" class="text-3xl font-extrabold text-orange-500 mt-1">0 / 0</p>
+                    <p class="text-[10px] text-gray-500 mt-1">days tracked overall</p>
+                </div>
+                <div class="bg-[#1f2533] p-4 rounded-xl text-center flex flex-col justify-center items-center">
+                    <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Attendance Ratio</p>
+                    <p id="analyticsRatioPercent" class="text-3xl font-extrabold text-white mt-1">0%</p>
+                </div>
+            </div>
+
+            <div class="bg-[#141820] rounded-xl p-3 border border-gray-800 max-h-40 overflow-y-auto">
+                <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">Historic Attendance Presence Log</p>
+                <ul id="analyticsDatesList" class="space-y-1 text-xs divide-y divide-gray-850">
+                    <!-- Date lists -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI TOAST -->
+    <div id="confirmationToast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 ease-out hidden w-full max-w-sm">
+        <div class="glass-card bg-[#1a1f2c] border border-orange-500/30 p-4 rounded-xl shadow-2xl flex flex-col space-y-3">
+            <div class="flex items-start space-x-3">
+                <span class="text-orange-500 text-xl">⚠️</span>
+                <div>
+                    <h4 id="toastTitle" class="text-sm font-bold text-white">Confirm Change</h4>
+                    <p id="toastMessage" class="text-xs text-gray-400 mt-0.5">Validate configuration update parameters?</p>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 text-xs font-bold">
+                <button id="toastCancelBtn" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition">Cancel</button>
+                <button id="toastConfirmBtn" class="bg-orange-500 hover:bg-orange-400 text-black px-3 py-1.5 rounded-lg transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP ENGINE LOGIC SCRIPT -->
+    <script>
+        // =========================================================================
+        // PRIVATE API CONFIGURATION: PASTE YOUR /exec GOOGLE MACRO WEB APP LINK HERE
+        // =========================================================================
+        const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbxuB2u3wC07UAwV2RDZvSMLW3Uz3fDr3sjUaI8lKhXt2-KE6HVOr-VoY9itkF_tlWga/exec'; 
+
+        let students = JSON.parse(localStorage.getItem('kb_pro_v2_students')) || [];
+        let attendanceLogs = JSON.parse(localStorage.getItem('kb_pro_v2_attendance')) || {}; 
+        let feeLogs = JSON.parse(localStorage.getItem('kb_pro_v2_fees')) || {}; 
+        
+        let currentFilter = 'all';
+        let viewMode = 'date'; 
+        let selectedDate = '';
+        let selectedMonthKey = ''; 
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('attendanceDate').value = today;
+            
+            // Load database seamlessly from background cloud upon initialization
+            if (googleScriptUrl && !googleScriptUrl.includes('YOUR_ACTUAL_EXEC_ID')) {
+                pullFromCloudSilently(); 
+            }
+            
+            const currentMonthStr = today.substring(0, 7);
+            const monthDropdown = document.getElementById('attendanceMonth');
+            if([...monthDropdown.options].some(o => o.value === currentMonthStr)) {
+                monthDropdown.value = currentMonthStr;
+            }
+            
+            syncTimeVariables();
+        });
+
+        // SEAMLESS BACKGROUND DB LOAD ENGINE
+        async function pullFromCloudSilently() {
+            if (!googleScriptUrl || googleScriptUrl.includes('YOUR_ACTUAL_EXEC_ID')) return;
+            try {
+                const response = await fetch(googleScriptUrl);
+                const data = await response.json();
+                if (data.students) {
+                    students = data.students;
+                    attendanceLogs = data.attendanceLogs || {};
+                    feeLogs = data.feeLogs || {};
+                    saveStateLocally();
+                    renderStudents();
+                }
+            } catch(e) {
+                console.warn("Silent background load failed, using local browser cache.", e);
+            }
+        }
+
+        // INTUITIVE FORWARD PUSH AND BACKWARD PULL CLOUD SYNC CONTROL
+        async function syncWithCloud() {
+            if (!googleScriptUrl || googleScriptUrl.includes('YOUR_ACTUAL_EXEC_ID')) {
+                alert("Please open the source code and configure your private 'googleScriptUrl' key variable parameters first.");
+                return;
+            }
+
+            const btn = document.getElementById('cloudSyncBtn');
+            const icon = document.getElementById('syncIcon');
+            const txt = document.getElementById('syncText');
+
+            btn.disabled = true;
+            icon.innerText = "⏳";
+            txt.innerText = "Connecting...";
+
+            try {
+                // Send current UI memory directly to Google Database Sheet
+                const response = await fetch(googleScriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', // Solves security sandboxing browser handshake blocks
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ students, attendanceLogs, feeLogs })
+                });
+
+                // Let client know success
+                icon.innerText = "✅";
+                txt.innerText = "Cloud Synced!";
+                setTimeout(() => {
+                    icon.innerText = "🔄";
+                    txt.innerText = "Sync to Cloud";
+                    btn.disabled = false;
+                }, 2000);
+            } catch(e) {
+                console.error(e);
+                alert("Synchronization error. Verify your Web App URL config.");
+                icon.innerText = "🔄";
+                txt.innerText = "Sync to Cloud";
+                btn.disabled = false;
+            }
+        }
+
+        // CSV RECOVERY BACKUP IMPORT FUNCTIONALITY
+        function importFromCSV(event) {
+            const file = event.target.files[0];
+            const statusLabel = document.getElementById('importStatusText');
+            if (!file) return;
+
+            statusLabel.textContent = "Parsing file...";
+            statusLabel.className = "text-xs font-semibold text-amber-500";
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+                    const lines = text.split(/\r\n|\n/);
+                    if (lines.length < 2) throw new Error("File formatting is incorrect or row items are missing.");
+
+                    // Dynamic column header tracking index maps
+                    const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
+                    const idIdx = headers.indexOf("Student ID");
+                    const nameIdx = headers.indexOf("Full Name");
+                    const phoneIdx = headers.indexOf("Phone Contact");
+                    const statusIdx = headers.indexOf("Current Status");
+                    const monthIdx = headers.indexOf("Target Month");
+                    const feeIdx = headers.indexOf("Fee Status");
+                    const paidDateIdx = headers.indexOf("Date Paid");
+
+                    if (idIdx === -1 || nameIdx === -1) {
+                        throw new Error("Invalid format. Make sure you use an exported backup file featuring 'Student ID' and 'Full Name'.");
+                    }
+
+                    let newStudents = [];
+                    let tempFeeLogs = { ...feeLogs };
+
+                    for(let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+
+                        const cols = line.split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+                        const parsedId = parseInt(cols[idIdx]);
+                        if (isNaN(parsedId)) continue;
+
+                        // Restore profile object mapping
+                        const isStudentActive = statusIdx !== -1 ? cols[statusIdx] === "Active" : true;
+                        if (!newStudents.some(s => s.id === parsedId)) {
+                            newStudents.push({
+                                id: parsedId,
+                                name: cols[nameIdx] || "Restored Fighter",
+                                phone: phoneIdx !== -1 ? cols[phoneIdx] : "",
+                                isActive: isStudentActive
+                            });
+                        }
+
+                        // Restore historical payment ledger if columns matched properly
+                        if (monthIdx !== -1 && feeIdx !== -1 && cols[monthIdx]) {
+                            const currentMonthKey = cols[monthIdx];
+                            if (!tempFeeLogs[currentMonthKey]) tempFeeLogs[currentMonthKey] = {};
+                            
+                            const isPaid = cols[feeIdx] === "Paid";
+                            tempFeeLogs[currentMonthKey][parsedId] = {
+                                paid: isPaid,
+                                date: (paidDateIdx !== -1 && cols[paidDateIdx]) ? cols[paidDateIdx] : null
+                            };
+                        }
+                    }
+
+                    if (newStudents.length === 0) throw new Error("No data records could be detected.");
+
+                    // Overwrite state models securely
+                    students = newStudents;
+                    feeLogs = tempFeeLogs;
+                    
+                    saveState();
+                    renderStudents();
+                    
+                    statusLabel.textContent = `✅ Successfully imported ${newStudents.length} profiles!`;
+                    statusLabel.className = "text-xs font-semibold text-emerald-500";
+                } catch(err) {
+                    statusLabel.textContent = `❌ ${err.message}`;
+                    statusLabel.className = "text-xs font-semibold text-red-500";
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function toggleViewMode(mode) {
+            viewMode = mode;
+            const dateContainer = document.getElementById('viewModeDateContainer');
+            const monthContainer = document.getElementById('viewModeMonthContainer');
+            const dBtn = document.getElementById('modeDateBtn');
+            const mBtn = document.getElementById('modeMonthBtn');
+
+            if (mode === 'date') {
+                dateContainer.classList.remove('hidden');
+                monthContainer.classList.add('hidden');
+                dBtn.className = "text-xs px-3 py-1 rounded-md text-white bg-gray-800 transition";
+                mBtn.className = "text-xs px-3 py-1 rounded-md text-gray-400 hover:text-white transition";
+            } else {
+                dateContainer.classList.add('hidden');
+                monthContainer.classList.remove('hidden');
+                dBtn.className = "text-xs px-3 py-1 rounded-md text-gray-400 hover:text-white transition";
+                mBtn.className = "text-xs px-3 py-1 rounded-md text-white bg-gray-800 transition";
+            }
+            syncTimeVariables();
+        }
+
+        function syncTimeVariables() {
+            selectedDate = document.getElementById('attendanceDate').value;
+            selectedMonthKey = document.getElementById('attendanceMonth').value;
+
+            if (viewMode === 'date') {
+                selectedMonthKey = selectedDate.substring(0, 7);
+            }
+
+            const dObj = new Date(selectedDate + "T00:00:00");
+            const mObj = new Date(selectedMonthKey + "-02T00:00:00"); 
+
+            const fDate = dObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const fMonth = mObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            document.getElementById('attendanceHeaderDate').innerText = viewMode === 'date' ? `Attendance (${fDate})` : 'Attendance Tracking';
+            document.getElementById('feeHeaderMonth').innerText = `Fees (${fMonth})`;
+
+            updateMetrics();
+            renderStudents();
+        }
+
+        function handleDateChange() { syncTimeVariables(); }
+        function handleMonthChange() { syncTimeVariables(); }
+
+        function saveStateLocally() {
+            localStorage.setItem('kb_pro_v2_students', JSON.stringify(students));
+            localStorage.setItem('kb_pro_v2_attendance', JSON.stringify(attendanceLogs));
+            localStorage.setItem('kb_pro_v2_fees', JSON.stringify(feeLogs));
+            updateMetrics();
+        }
+
+        // Auto-saves state locally and alerts background queue to try writing updates
+        function saveState() {
+            saveStateLocally();
+            if (googleScriptUrl && !googleScriptUrl.includes('YOUR_ACTUAL_EXEC_ID')) {
+                // Background update to keep things in sync seamlessly
+                fetch(googleScriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ students, attendanceLogs, feeLogs })
+                }).catch(e => console.warn("Background cloud write queue offline. Sync manually.", e));
+            }
+        }
+
+        function requestConfirmation(title, message, onConfirm) {
+            const toast = document.getElementById('confirmationToast');
+            document.getElementById('toastTitle').innerText = title;
+            document.getElementById('toastMessage').innerText = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.remove('translate-y-20', 'opacity-0'), 10);
+
+            document.getElementById('toastConfirmBtn').onclick = () => { onConfirm(); closeConfirmationToast(); };
+            document.getElementById('toastCancelBtn').onclick = closeConfirmationToast;
+        }
+
+        function closeConfirmationToast() {
+            const toast = document.getElementById('confirmationToast');
+            toast.classList.add('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('hidden'), 300);
+        }
+
+        function openStudentModal(isEdit, studentId = null) {
+            const modal = document.getElementById('studentModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+
+            if (isEdit && studentId) {
+                const student = students.find(s => s.id === studentId);
+                document.getElementById('modalTitle').innerText = `Edit Profile`;
+                document.getElementById('modalStudentId').value = student.id;
+                document.getElementById('studentName').value = student.name;
+                document.getElementById('studentPhone').value = student.phone || '';
+            } else {
+                document.getElementById('modalTitle').innerText = "Add New Fighter";
+                document.getElementById('studentForm').reset();
+                document.getElementById('modalStudentId').value = '';
+            }
+        }
+
+        function closeStudentModal() {
+            const modal = document.getElementById('studentModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+
+        function saveStudentForm(e) {
+            e.preventDefault();
+            const idInput = document.getElementById('modalStudentId').value;
+            const name = document.getElementById('studentName').value.trim();
+            const phone = document.getElementById('studentPhone').value.trim();
+
+            if (idInput) {
+                const index = students.findIndex(s => s.id == idInput);
+                if (index !== -1) {
+                    students[index].name = name;
+                    students[index].phone = phone;
+                }
+            } else {
+                const nextId = students.length === 0 ? 1001 : Math.max(...students.map(s => s.id)) + 1;
+                students.push({ id: nextId, name: name, phone: phone, isActive: true });
+            }
+
+            saveState();
+            renderStudents();
+            document.getElementById('studentForm').reset();
+            closeStudentModal();
+        }
+
+        function showStudentAnalytics(id, name) {
+            document.getElementById('analyticsName').innerText = name;
+            document.getElementById('analyticsId').innerText = `Fighter System Registration: #${id}`;
+            
+            let totalClassDays = Object.keys(attendanceLogs).length;
+            let attendedDaysCount = 0;
+            const datesListUl = document.getElementById('analyticsDatesList');
+            datesListUl.innerHTML = '';
+
+            Object.keys(attendanceLogs).sort().reverse().forEach(dateKey => {
+                const wasPresent = !!attendanceLogs[dateKey][id];
+                if(wasPresent) attendedDaysCount++;
+
+                const li = document.createElement('li');
+                li.className = "py-1.5 flex justify-between items-center text-gray-300";
+                li.innerHTML = `<span>📅 ${dateKey}</span> <span class="${wasPresent?'text-orange-400 font-bold':'text-gray-600'}">${wasPresent?'Present':'Absent'}</span>`;
+                datesListUl.appendChild(li);
+            });
+
+            if(totalClassDays === 0) {
+                datesListUl.innerHTML = `<li class="text-center py-4 text-gray-500">No historic classes loaded yet.</li>`;
+            }
+
+            document.getElementById('analyticsCountText').innerText = `${attendedDaysCount} / ${totalClassDays}`;
+            const ratioPercent = totalClassDays > 0 ? Math.round((attendedDaysCount / totalClassDays) * 100) : 0;
+            document.getElementById('analyticsRatioPercent').innerText = `${ratioPercent}%`;
+
+            const modal = document.getElementById('analyticsModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function closeAnalyticsModal() {
+            const modal = document.getElementById('analyticsModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+
+        function handleStatusToggle(id, name, isCurrentlyActive) {
+            const stateTxt = isCurrentlyActive ? 'INACTIVE' : 'ACTIVE';
+            requestConfirmation("Modify Status?", `Set ${name} to ${stateTxt}?`, () => {
+                students = students.map(s => s.id === id ? { ...s, isActive: !s.isActive } : s);
+                saveState();
+                renderStudents();
+            });
+        }
+
+        function handleFeeToggle(id, name, isCurrentlyPaid) {
+            const stateTxt = isCurrentlyPaid ? 'UNPAID' : 'PAID';
+            requestConfirmation("Verify Fee Remittance?", `Mark ${name} as ${stateTxt} for current month selection?`, () => {
+                if (!feeLogs[selectedMonthKey]) feeLogs[selectedMonthKey] = {};
+                
+                if(!isCurrentlyPaid) {
+                    const todayStamp = new Date().toISOString().split('T')[0];
+                    feeLogs[selectedMonthKey][id] = { paid: true, date: todayStamp };
+                } else {
+                    feeLogs[selectedMonthKey][id] = { paid: false, date: null };
+                }
+                
+                saveState();
+                renderStudents();
+            });
+        }
+
+        function toggleAttendance(id) {
+            if (!attendanceLogs[selectedDate]) attendanceLogs[selectedDate] = {};
+            attendanceLogs[selectedDate][id] = !attendanceLogs[selectedDate][id];
+            saveState();
+            renderStudents();
+        }
+
+        function deleteStudent(id, name) {
+            requestConfirmation("⚠️ Permanent Wipe", `Delete ${name} and clear all baseline analytics histories?`, () => {
+                students = students.filter(s => s.id !== id);
+                saveState();
+                renderStudents();
+            });
+        }
+
+        function setFilter(filterType) {
+            currentFilter = filterType;
+            ['All', 'Active', 'Inactive', 'Unpaid'].forEach(type => {
+                const btn = document.getElementById(`filter${type}`);
+                if(btn) btn.className = type.toLowerCase() === filterType ? "px-3.5 py-1 rounded-lg text-white bg-gray-800" : "px-3.5 py-1 rounded-lg text-gray-400 hover:text-white";
+            });
+            
+            const cardWidget = document.getElementById('unpaidCardWidget');
+            if(filterType === 'unpaid') {
+                cardWidget.classList.add('border-red-500', 'bg-red-950/20');
+            } else {
+                cardWidget.classList.remove('border-red-500', 'bg-red-950/20');
+            }
+            renderStudents();
+        }
+
+        function updateMetrics() {
+            const monthFees = feeLogs[selectedMonthKey] || {};
+            const activeCohort = students.filter(s => s.isActive);
+            
+            const activeEl = document.getElementById('statActive');
+            if (activeEl) activeEl.innerText = activeCohort.length;
+            
+            const unpaidEl = document.getElementById('statUnpaid');
+            if (unpaidEl) {
+                const unpaidCount = activeCohort.filter(s => !monthFees[s.id] || !monthFees[s.id].paid).length;
+                unpaidEl.innerText = unpaidCount;
+            }
+        }
+
+        function renderStudents() {
+            const tbody = document.getElementById('studentTableBody');
+            const searchQuery = document.getElementById('searchBar').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            const dayAttendance = attendanceLogs[selectedDate] || {};
+            const monthFees = feeLogs[selectedMonthKey] || {};
+
+            const filtered = students.filter(s => {
+                const matchesSearch = s.name.toLowerCase().includes(searchQuery) || s.id.toString().includes(searchQuery);
+                const isPaid = monthFees[s.id] && monthFees[s.id].paid;
+                
+                if (currentFilter === 'active') return s.isActive && matchesSearch;
+                if (currentFilter === 'inactive') return !s.isActive && matchesSearch;
+                if (currentFilter === 'unpaid') return s.isActive && !isPaid && matchesSearch;
+                return matchesSearch;
+            });
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-sm text-gray-500">No matching logs found.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(student => {
+                const isPresent = !!dayAttendance[student.id];
+                const feeData = monthFees[student.id] || { paid: false, date: null };
+                const isPaid = feeData.paid;
+                const paymentDateDisplay = feeData.date ? feeData.date : '<span class="text-gray-600 font-mono">-</span>';
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-[#1b202b] transition duration-150";
+
+                row.innerHTML = `
+                    <td class="py-4 px-6 font-mono text-gray-400 font-bold">#${student.id}</td>
+                    <td class="py-4 px-6 cursor-pointer group" onclick="showStudentAnalytics(${student.id}, '${student.name}')">
+                        <div class="font-bold text-white group-hover:text-orange-400 transition flex items-center space-x-1.5">
+                            <span>${student.name}</span>
+                            <span class="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition font-medium">📊 View Stats</span>
+                        </div>
+                        <div class="text-xs text-gray-400">${student.phone || 'No phone profile'}</div>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <button onclick="handleStatusToggle(${student.id}, '${student.name}', ${student.isActive})" class="text-xs font-bold px-3 py-1.5 rounded-full transition ${student.isActive ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-gray-800 text-gray-400 border border-gray-700'}">
+                            ${student.isActive ? '🟢 Active' : '⚫ Inactive'}
+                        </button>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        ${(viewMode === 'date' && student.isActive) ? `
+                            <button onclick="toggleAttendance(${student.id})" class="text-xs font-semibold px-4 py-2 rounded-xl transition w-28 ${isPresent ? 'bg-orange-500 text-black font-bold' : 'bg-[#202632] text-gray-400 border border-gray-700'}">
+                                ${isPresent ? '✅ Present' : '❌ Absent'}
+                            </button>
+                        ` : (student.isActive ? '<span class="text-gray-500 text-xs">Switch to Date Mode</span>' : '<span class="text-gray-600">-</span>')}
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <button onclick="handleFeeToggle(${student.id}, '${student.name}', ${isPaid})" class="text-xs font-bold px-3 py-1.5 rounded-lg transition ${isPaid ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-900' : 'bg-red-950 text-red-400 border border-red-900'}">
+                            ${isPaid ? '💵 Paid' : '🚨 Unpaid'}
+                        </button>
+                    </td>
+                    <td class="py-4 px-6 text-center font-mono text-xs text-gray-300">${paymentDateDisplay}</td>
+                    <td class="py-4 px-6 text-right space-x-1 whitespace-nowrap">
+                        <button onclick="openStudentModal(true, ${student.id})" class="text-xs font-semibold text-gray-400 hover:text-white transition bg-gray-800 px-2 py-1 rounded-lg">Edit</button>
+                        <!--  <button onclick="deleteStudent(${student.id}, '${student.name}')" class="text-xs font-semibold text-red-400 hover:text-red-300 transition bg-red-950/30 px-2 py-1 rounded-lg">Remove</button> -->
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function exportToCSV() {
+            if (students.length === 0) { alert("No data available."); return; }
+            let csvContent = "data:text/csv;charset=utf-8,Student ID,Full Name,Phone Contact,Current Status,Target Month,Fee Status,Date Paid\n";
+
+            students.forEach(s => {
+                const statusStr = s.isActive ? "Active" : "Inactive";
+                const feeData = feeLogs[selectedMonthKey] && feeLogs[selectedMonthKey][s.id] ? feeLogs[selectedMonthKey][s.id] : { paid: false, date: "" };
+                const isPaid = feeData.paid ? "Paid" : "Unpaid";
+                csvContent += `"${s.id}","${s.name}","${s.phone || ''}","${statusStr}","${selectedMonthKey}","${isPaid}","${feeData.date || ''}"\n`;
+            });
+
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", `Kickboxing_Pro_Report_${selectedMonthKey}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+    <script>
+        // 1. Get current date details
+        const now = new Date();
+        const year = now.getFullYear();
+        // Months are 0-indexed in JS (January is 0), so we add 1 and pad with a leading zero if needed
+        const month = String(now.getMonth() + 1).padStart(2, '0'); 
+        
+        // 2. Format to match your option values (e.g., "2026-07")
+        const currentYearMonth = `${year}-${month}`;
+        
+        // 3. Set the select dropdown value
+        const selectElement = document.getElementById('attendanceMonth');
+        selectElement.value = currentYearMonth;
+      </script>
+</body>
+</html>
