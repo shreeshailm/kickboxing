@@ -140,8 +140,7 @@
                     <thead>
                         <tr class="border-b border-gray-800 text-xs font-semibold uppercase tracking-wider text-gray-400 bg-[#141820]">
                             <th class="py-4 px-6 w-20">ID</th>
-                            <th class="py-4 px-6">Name (Click for stats)</th>
-                            
+                            <th class="py-4 px-6">Name (Click for stats)</th>                         
                             <th class="py-4 px-6 text-center" id="attendanceHeaderDate">Attendance</th>
                             <th class="py-4 px-6 text-center" id="feeHeaderMonth">Fee Status</th>
                             <th class="py-4 px-6 text-center">Payment Date</th>
@@ -687,11 +686,7 @@
                         </div>
                         <div class="text-xs text-gray-400">${student.phone || 'No phone profile'}</div>
                     </td>
-                    <td class="py-4 px-6 text-center">
-                        <button onclick="handleStatusToggle(${student.id}, '${student.name}', ${student.isActive})" class="text-xs font-bold px-3 py-1.5 rounded-full transition ${student.isActive ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-gray-800 text-gray-400 border border-gray-700'}">
-                            ${student.isActive ? '🟢 Active' : '⚫ Inactive'}
-                        </button>
-                    </td>
+                    
                     <td class="py-4 px-6 text-center">
                         ${(viewMode === 'date' && student.isActive) ? `
                             <button onclick="toggleAttendance(${student.id})" class="text-xs font-semibold px-4 py-2 rounded-xl transition w-28 ${isPresent ? 'bg-orange-500 text-black font-bold' : 'bg-[#202632] text-gray-400 border border-gray-700'}">
@@ -708,6 +703,11 @@
                     <td class="py-4 px-6 text-right space-x-1 whitespace-nowrap">
                         <button onclick="openStudentModal(true, ${student.id})" class="text-xs font-semibold text-gray-400 hover:text-white transition bg-gray-800 px-2 py-1 rounded-lg">Edit</button>
                         <!--  <button onclick="deleteStudent(${student.id}, '${student.name}')" class="text-xs font-semibold text-red-400 hover:text-red-300 transition bg-red-950/30 px-2 py-1 rounded-lg">Remove</button> -->
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <button onclick="handleStatusToggle(${student.id}, '${student.name}', ${student.isActive})" class="text-xs font-bold px-3 py-1.5 rounded-full transition ${student.isActive ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-gray-800 text-gray-400 border border-gray-700'}">
+                            ${student.isActive ? '🟢 Active' : '⚫ Inactive'}
+                        </button>
                     </td>
                 `;
                 tbody.appendChild(row);
